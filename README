@@ -1,0 +1,7 @@
+A specializer that implements the matrix powers kernel using ctree (https://github.com/ucb-sejits/ctree)
+
+A port of the akx specializer using asp (https://github.com/jeffreymorlan/akx-specializer)
+
+Currently extremely basic and does not implement the full breadth of logic of the original specializer.
+
+In the akx directory, main.py contains the specializer along with simple testing.
