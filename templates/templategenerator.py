@@ -8,7 +8,7 @@ thisdir = os.path.dirname(__file__)
 template_powers = Template(filename=os.path.join(thisdir, 'akx-powers.tpl'))
 
 try:
-    temp = template_powers.render(variants=set(eval(sys.argv[1])), basis=0)
+    temp = template_powers.render(variants=tuple(eval(sys.argv[1])), basis=0)
     generated = open('generated', 'w')
     generated.write('-' * 5 + ' C generated from akx-powers.tpl with: '+ '-' * 6 + '\n')
     generated.write('variants = ' + sys.argv[1] + '\n')

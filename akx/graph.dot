@@ -1,0 +1,44 @@
+digraph myprogram {
+n50405072 [label="CFile\ngenerated.c"];
+n50405072 -> n50443792 [label="body[0]"];
+n50443792 [label="FunctionDecl\nstatic inline int apply(...)"];
+n50443792 -> n50444944 [label="params[0]"];
+n50444944 [label="SymbolRef\nint n"];
+n50444944 -> n50443792 [label="parent",style=dotted];
+n50443792 -> n50443984 [label="defn[0]"];
+n50443984 [label="Return\n"];
+n50443984 -> n50443792 [label="parent",style=dotted];
+n50443984 -> n50444304 [label="value"];
+n50444304 [label="BinaryOp\nMul"];
+n50444304 -> n50443984 [label="parent",style=dotted];
+n50444304 -> n50445072 [label="left"];
+n50445072 [label="SymbolRef\nn"];
+n50445072 -> n50444304 [label="parent",style=dotted];
+n50444304 -> n50444112 [label="right"];
+n50444112 [label="Constant\n2"];
+n50444112 -> n50444304 [label="parent",style=dotted];
+n50405072 -> n50446288 [label="body[1]"];
+n50446288 [label="StringTemplate\ntemplate: <<<
+void apply_all($array_decl) {\n    for (int i = 0; i < $num_items; i++) {\n        $array_ref[i] = apply( $array_ref[i] );\n    }\n}\n
+>>>"];
+n50446288 -> n50405072 [label="parent",style=dotted];
+n50446288 -> n50445328 [label="array_decl"];
+n50445328 [label="SymbolRef\nint* A"];
+n50445328 -> n50446288 [label="parent",style=dotted];
+n50446288 -> n50444560 [label="num_items"];
+n50444560 [label="Constant\n14"];
+n50444560 -> n50446288 [label="parent",style=dotted];
+n50446288 -> n50442448 [label="array_ref"];
+n50442448 [label="SymbolRef\nA"];
+n50442448 -> n50446288 [label="parent",style=dotted];
+n50405072 -> n50446416 [label="body[2]"];
+n50446416 [label="StringTemplate\ntemplate: <<<
+\n//hi\n
+>>>"];
+n50446416 -> n50405072 [label="parent",style=dotted];
+n50405072 -> n50446544 [label="body[3]"];
+n50446544 [label="StringTemplate\ntemplate: <<<
+\n$list\n
+>>>"];
+n50446544 -> n50405072 [label="parent",style=dotted];
+}

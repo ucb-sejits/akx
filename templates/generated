@@ -1,5 +1,5 @@
 ----- C generated from akx-powers.tpl with: ------
-variants = ([(2, 2, 2, 2, 2)])
+variants = ([(4, 4, 0, 4, 4), (1, 1, 0, 1, 1)])
 --------------------------------------------------
 
 #include <Python.h>
@@ -37,7 +37,278 @@ pthread_barrier_t barrier;
 
 
 
-void bcsr_spmv_2_2_2_2_2(
+void bcsr_spmv_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb)
+{
+  index_t ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (ib = 0; ib < mb; ++ib)
+  {
+    
+    
+      double y0 = 0.0;
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double x0 = x[j*1 + 0];
+
+      
+          y0 += A->bvalues[jb*1 + 0] * x0;
+
+    }
+    
+      y[ib*1 + 0] = y0;
+
+
+  }
+}
+
+void bcsr_spmv_rowlist_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb,
+  const index_t *__restrict__ computation_seq,
+  index_t seq_len)
+{
+  index_t q, ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (q = 0; q < seq_len; q++)
+  {
+    ib = computation_seq[q];
+    
+    
+      double y0 = 0.0;
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double x0 = x[j*1 + 0];
+
+      
+          y0 += A->bvalues[jb*1 + 0] * x0;
+
+    }
+    
+      y[ib*1 + 0] = y0;
+
+
+  }
+}
+
+void bcsr_spmv_stanzas_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb,
+  const index_t *__restrict__ computation_seq,
+  index_t seq_len)
+{
+  index_t q, ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (q = 0; q < seq_len; q += 2)
+  {
+    for (ib = computation_seq[q]; ib < computation_seq[q+1]; ib++)
+    {
+      
+    
+      double y0 = 0.0;
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double x0 = x[j*1 + 0];
+
+      
+          y0 += A->bvalues[jb*1 + 0] * x0;
+
+    }
+    
+      y[ib*1 + 0] = y0;
+
+
+    }
+  }
+}
+
+
+
+
+void bcsr_spmv_symmetric_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb)
+{
+  index_t ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (ib = 0; ib < mb; ++ib)
+  {
+    
+    
+      double yi0 = y[ib*1 + 0];
+
+    
+      double xi0 = x[ib*1 + 0];
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double xj0 = x[j*1 + 0];
+
+      
+          yi0 += A->bvalues[jb*1 + 0] * xj0;
+
+      if (j > ib && j < mb)
+      {
+        
+      double yj0 = y[j*1 + 0];
+
+        
+          yj0 += A->bvalues[jb*1 + 0] * xi0;
+
+        
+      y[j*1 + 0] = yj0;
+
+      }
+    }
+    
+      y[ib*1 + 0] = yi0;
+
+
+  }
+}
+
+void bcsr_spmv_symmetric_rowlist_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb,
+  const index_t *__restrict__ computation_seq,
+  index_t seq_len)
+{
+  index_t q, ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (q = 0; q < seq_len; q++)
+  {
+    ib = computation_seq[q];
+    
+    
+      double yi0 = y[ib*1 + 0];
+
+    
+      double xi0 = x[ib*1 + 0];
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double xj0 = x[j*1 + 0];
+
+      
+          yi0 += A->bvalues[jb*1 + 0] * xj0;
+
+      if (j > ib && j < mb)
+      {
+        
+      double yj0 = y[j*1 + 0];
+
+        
+          yj0 += A->bvalues[jb*1 + 0] * xi0;
+
+        
+      y[j*1 + 0] = yj0;
+
+      }
+    }
+    
+      y[ib*1 + 0] = yi0;
+
+
+  }
+}
+
+void bcsr_spmv_symmetric_stanzas_1_1_0_1_1(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb,
+  const index_t *__restrict__ computation_seq,
+  index_t seq_len)
+{
+  index_t q, ib, jb;
+  
+  uint16_t *__restrict__ browptr = A->browptr16;
+  uint16_t *__restrict__ bcolidx = A->bcolidx16;
+
+  for (q = 0; q < seq_len; q += 2)
+  {
+    for (ib = computation_seq[q]; ib < computation_seq[q+1]; ib++)
+    {
+      
+    
+      double yi0 = y[ib*1 + 0];
+
+    
+      double xi0 = x[ib*1 + 0];
+
+    for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
+    {
+      index_t j = bcolidx[jb];
+      
+      double xj0 = x[j*1 + 0];
+
+      
+          yi0 += A->bvalues[jb*1 + 0] * xj0;
+
+      if (j > ib && j < mb)
+      {
+        
+      double yj0 = y[j*1 + 0];
+
+        
+          yj0 += A->bvalues[jb*1 + 0] * xi0;
+
+        
+      y[j*1 + 0] = yj0;
+
+      }
+    }
+    
+      y[ib*1 + 0] = yi0;
+
+
+    }
+  }
+}
+
+
+
+
+void bcsr_spmv_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -53,27 +324,39 @@ void bcsr_spmv_2_2_2_2_2(
     
     
       __m128d y0 = _mm_setzero_pd();
+      __m128d y1 = _mm_setzero_pd();
+      __m128d y2 = _mm_setzero_pd();
+      __m128d y3 = _mm_setzero_pd();
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d x0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d x1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d x0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d x2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
     }
     
-      _mm_store_pd(&y[ib*2 + 0], y0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(y0, y0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(y1, y1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(y2, y2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(y3, y3));
 
 
   }
 }
 
-void bcsr_spmv_rowlist_2_2_2_2_2(
+void bcsr_spmv_rowlist_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -92,27 +375,39 @@ void bcsr_spmv_rowlist_2_2_2_2_2(
     
     
       __m128d y0 = _mm_setzero_pd();
+      __m128d y1 = _mm_setzero_pd();
+      __m128d y2 = _mm_setzero_pd();
+      __m128d y3 = _mm_setzero_pd();
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d x0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d x1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d x0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d x2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
     }
     
-      _mm_store_pd(&y[ib*2 + 0], y0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(y0, y0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(y1, y1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(y2, y2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(y3, y3));
 
 
   }
 }
 
-void bcsr_spmv_stanzas_2_2_2_2_2(
+void bcsr_spmv_stanzas_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -132,21 +427,33 @@ void bcsr_spmv_stanzas_2_2_2_2_2(
       
     
       __m128d y0 = _mm_setzero_pd();
+      __m128d y1 = _mm_setzero_pd();
+      __m128d y2 = _mm_setzero_pd();
+      __m128d y3 = _mm_setzero_pd();
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d x0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d x1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d x0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d x2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          y0 = _mm_add_pd(y0, _mm_mul_pd(x1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          y0 = _mm_add_pd(y0, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          y1 = _mm_add_pd(y1, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          y2 = _mm_add_pd(y2, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          y3 = _mm_add_pd(y3, _mm_mul_pd(x2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
     }
     
-      _mm_store_pd(&y[ib*2 + 0], y0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(y0, y0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(y1, y1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(y2, y2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(y3, y3));
 
 
     }
@@ -156,7 +463,7 @@ void bcsr_spmv_stanzas_2_2_2_2_2(
 
 
 
-void bcsr_spmv_symmetric_2_2_2_2_2(
+void bcsr_spmv_symmetric_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -171,46 +478,67 @@ void bcsr_spmv_symmetric_2_2_2_2_2(
   {
     
     
-      __m128d yi0 = _mm_load_pd(&y[ib*2 + 0]);
+      __m128d yi0 = _mm_load_sd(&y[ib*4 + 0]);
+      __m128d yi1 = _mm_load_sd(&y[ib*4 + 1]);
+      __m128d yi2 = _mm_load_sd(&y[ib*4 + 2]);
+      __m128d yi3 = _mm_load_sd(&y[ib*4 + 3]);
 
     
-      __m128d xi0 = _mm_load_pd(&x[ib*2 + 0]);
+      __m128d xi0 = _mm_load1_pd(&x[ib*4 + 0]);
+      __m128d xi1 = _mm_load1_pd(&x[ib*4 + 1]);
+      __m128d xi2 = _mm_load1_pd(&x[ib*4 + 2]);
+      __m128d xi3 = _mm_load1_pd(&x[ib*4 + 3]);
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d xj0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d xj1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d xj0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d xj2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
       if (j > ib && j < mb)
       {
         
-      __m128d yj0 = _mm_load_sd(&y[j*2 + 0]);
-      __m128d yj1 = _mm_load_sd(&y[j*2 + 1]);
+      __m128d yj0 = _mm_load_pd(&y[j*4 + 0]);
+      __m128d yj2 = _mm_load_pd(&y[j*4 + 2]);
 
         
-          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yj1 = _mm_add_pd(yj1, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
         
-      _mm_store_sd(&y[j*2 + 0], _mm_hadd_pd(yj0, yj0));
-      _mm_store_sd(&y[j*2 + 1], _mm_hadd_pd(yj1, yj1));
+      _mm_store_pd(&y[j*4 + 0], yj0);
+      _mm_store_pd(&y[j*4 + 2], yj2);
 
       }
     }
     
-      _mm_store_pd(&y[ib*2 + 0], yi0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(yi0, yi0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(yi1, yi1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(yi2, yi2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(yi3, yi3));
 
 
   }
 }
 
-void bcsr_spmv_symmetric_rowlist_2_2_2_2_2(
+void bcsr_spmv_symmetric_rowlist_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -228,46 +556,67 @@ void bcsr_spmv_symmetric_rowlist_2_2_2_2_2(
     ib = computation_seq[q];
     
     
-      __m128d yi0 = _mm_load_pd(&y[ib*2 + 0]);
+      __m128d yi0 = _mm_load_sd(&y[ib*4 + 0]);
+      __m128d yi1 = _mm_load_sd(&y[ib*4 + 1]);
+      __m128d yi2 = _mm_load_sd(&y[ib*4 + 2]);
+      __m128d yi3 = _mm_load_sd(&y[ib*4 + 3]);
 
     
-      __m128d xi0 = _mm_load_pd(&x[ib*2 + 0]);
+      __m128d xi0 = _mm_load1_pd(&x[ib*4 + 0]);
+      __m128d xi1 = _mm_load1_pd(&x[ib*4 + 1]);
+      __m128d xi2 = _mm_load1_pd(&x[ib*4 + 2]);
+      __m128d xi3 = _mm_load1_pd(&x[ib*4 + 3]);
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d xj0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d xj1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d xj0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d xj2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
       if (j > ib && j < mb)
       {
         
-      __m128d yj0 = _mm_load_sd(&y[j*2 + 0]);
-      __m128d yj1 = _mm_load_sd(&y[j*2 + 1]);
+      __m128d yj0 = _mm_load_pd(&y[j*4 + 0]);
+      __m128d yj2 = _mm_load_pd(&y[j*4 + 2]);
 
         
-          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yj1 = _mm_add_pd(yj1, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
         
-      _mm_store_sd(&y[j*2 + 0], _mm_hadd_pd(yj0, yj0));
-      _mm_store_sd(&y[j*2 + 1], _mm_hadd_pd(yj1, yj1));
+      _mm_store_pd(&y[j*4 + 0], yj0);
+      _mm_store_pd(&y[j*4 + 2], yj2);
 
       }
     }
     
-      _mm_store_pd(&y[ib*2 + 0], yi0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(yi0, yi0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(yi1, yi1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(yi2, yi2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(yi3, yi3));
 
 
   }
 }
 
-void bcsr_spmv_symmetric_stanzas_2_2_2_2_2(
+void bcsr_spmv_symmetric_stanzas_4_4_0_4_4(
   const struct bcsr_t *__restrict__ A,
   const value_t *__restrict__ x,
   value_t *__restrict__ y,
@@ -286,40 +635,61 @@ void bcsr_spmv_symmetric_stanzas_2_2_2_2_2(
     {
       
     
-      __m128d yi0 = _mm_load_pd(&y[ib*2 + 0]);
+      __m128d yi0 = _mm_load_sd(&y[ib*4 + 0]);
+      __m128d yi1 = _mm_load_sd(&y[ib*4 + 1]);
+      __m128d yi2 = _mm_load_sd(&y[ib*4 + 2]);
+      __m128d yi3 = _mm_load_sd(&y[ib*4 + 3]);
 
     
-      __m128d xi0 = _mm_load_pd(&x[ib*2 + 0]);
+      __m128d xi0 = _mm_load1_pd(&x[ib*4 + 0]);
+      __m128d xi1 = _mm_load1_pd(&x[ib*4 + 1]);
+      __m128d xi2 = _mm_load1_pd(&x[ib*4 + 2]);
+      __m128d xi3 = _mm_load1_pd(&x[ib*4 + 3]);
 
     for (jb = browptr[ib]; jb < browptr[ib+1]; ++jb)
     {
       index_t j = bcolidx[jb];
       
-      __m128d xj0 = _mm_load1_pd(&x[j*2 + 0]);
-      __m128d xj1 = _mm_load1_pd(&x[j*2 + 1]);
+      __m128d xj0 = _mm_load_pd(&x[j*4 + 0]);
+      __m128d xj2 = _mm_load_pd(&x[j*4 + 2]);
 
       
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj1, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yi0 = _mm_add_pd(yi0, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yi1 = _mm_add_pd(yi1, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yi2 = _mm_add_pd(yi2, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj0, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yi3 = _mm_add_pd(yi3, _mm_mul_pd(xj2, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
       if (j > ib && j < mb)
       {
         
-      __m128d yj0 = _mm_load_sd(&y[j*2 + 0]);
-      __m128d yj1 = _mm_load_sd(&y[j*2 + 1]);
+      __m128d yj0 = _mm_load_pd(&y[j*4 + 0]);
+      __m128d yj2 = _mm_load_pd(&y[j*4 + 2]);
 
         
-          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 0])));
-          yj1 = _mm_add_pd(yj1, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*4 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 0])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi0, _mm_load_pd(&A->bvalues[jb*16 + 2])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 4])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi1, _mm_load_pd(&A->bvalues[jb*16 + 6])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 8])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi2, _mm_load_pd(&A->bvalues[jb*16 + 10])));
+          yj0 = _mm_add_pd(yj0, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 12])));
+          yj2 = _mm_add_pd(yj2, _mm_mul_pd(xi3, _mm_load_pd(&A->bvalues[jb*16 + 14])));
 
         
-      _mm_store_sd(&y[j*2 + 0], _mm_hadd_pd(yj0, yj0));
-      _mm_store_sd(&y[j*2 + 1], _mm_hadd_pd(yj1, yj1));
+      _mm_store_pd(&y[j*4 + 0], yj0);
+      _mm_store_pd(&y[j*4 + 2], yj2);
 
       }
     }
     
-      _mm_store_pd(&y[ib*2 + 0], yi0);
+      _mm_store_sd(&y[ib*4 + 0], _mm_hadd_pd(yi0, yi0));
+      _mm_store_sd(&y[ib*4 + 1], _mm_hadd_pd(yi1, yi1));
+      _mm_store_sd(&y[ib*4 + 2], _mm_hadd_pd(yi2, yi2));
+      _mm_store_sd(&y[ib*4 + 3], _mm_hadd_pd(yi3, yi3));
 
 
     }
@@ -351,14 +721,25 @@ struct bcsr_funcs {
     bcsr_func_implicit implicit[2];
   } funcs[2];
 } bcsr_funcs_table[] = {
-  { 2, 2, 2, 2, 2,
-    { { bcsr_spmv_2_2_2_2_2,
-        { bcsr_spmv_rowlist_2_2_2_2_2,
-          bcsr_spmv_stanzas_2_2_2_2_2 }
+  { 1, 1, 0, 1, 1,
+    { { bcsr_spmv_1_1_0_1_1,
+        { bcsr_spmv_rowlist_1_1_0_1_1,
+          bcsr_spmv_stanzas_1_1_0_1_1 }
       },
-      { bcsr_spmv_symmetric_2_2_2_2_2,
-        { bcsr_spmv_symmetric_rowlist_2_2_2_2_2,
-          bcsr_spmv_symmetric_stanzas_2_2_2_2_2 }
+      { bcsr_spmv_symmetric_1_1_0_1_1,
+        { bcsr_spmv_symmetric_rowlist_1_1_0_1_1,
+          bcsr_spmv_symmetric_stanzas_1_1_0_1_1 }
+      }
+    }
+  },
+  { 4, 4, 0, 4, 4,
+    { { bcsr_spmv_4_4_0_4_4,
+        { bcsr_spmv_rowlist_4_4_0_4_4,
+          bcsr_spmv_stanzas_4_4_0_4_4 }
+      },
+      { bcsr_spmv_symmetric_4_4_0_4_4,
+        { bcsr_spmv_symmetric_rowlist_4_4_0_4_4,
+          bcsr_spmv_symmetric_stanzas_4_4_0_4_4 }
       }
     }
   },
