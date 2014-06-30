@@ -1,0 +1,19 @@
+#include <Python.h>
+#include <numpy/arrayobject.h>
+
+// C headers
+#include <stdlib.h> // for NULL
+#include <stdio.h>  // for fprintf
+
+#ifdef __SSE3__ // will be defined when compiling, but not when checking dependencies
+#include <pmmintrin.h> // for SSE
+#endif
+
+#include "akx.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#else
+#include <pthread.h> // for pthreads stuff
+pthread_barrier_t barrier;
+#endif
