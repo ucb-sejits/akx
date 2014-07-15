@@ -1,27 +1,9 @@
-import logging
-
-logging.basicConfig(level=20)
-
-import numpy as np
-
 from ctree.c.nodes import *
 from ctree.templates.nodes import *
 from ctree.transformations import *
-from ctree.jit import LazySpecializedFunction, ConcreteSpecializedFunction
-from ctypes import CFUNCTYPE
+from ctree.jit import LazySpecializedFunction
 
 # ---------------------------------------------------------------------------
-# Specializer code
-
-class AkxFunction(ConcreteSpecializedFunction):
-
-    def finalize(self, tree, entry_name, entry_type):
-        self._c_function = self._compile(entry_name, tree, entry_type)
-        return self
-
-    def __call__(self):
-        self._c_function()
-
 
 class AkxGenerator(LazySpecializedFunction):
     def args_to_subconfig(self, args):
@@ -32,12 +14,8 @@ class AkxGenerator(LazySpecializedFunction):
         """
 
         return {
-            'b_m': args[0],
-            'b_n': args[1],
-            'b_transpose': args[2],
-            'browptr_comp': args[3],
-            'bcolidx_comp': args[4],
-            'basis': args[5],
+            'variants': args[0],
+            'basis': args[1]
         }
 
 
@@ -47,14 +25,15 @@ class AkxGenerator(LazySpecializedFunction):
         given in program_config.
         """
         arg_config, tuner_config = program_config
-        #variants_tuple = arg_config['variants_tuple']
 
-        b_m = arg_config['b_m']
-        b_n = arg_config['b_n']
-        b_transpose = arg_config['b_transpose']
-        browptr_comp = arg_config['browptr_comp']
-        bcolidx_comp = arg_config['bcolidx_comp']
+        variants = arg_config['variants']
         basis = arg_config['basis']
+        t = variants.pop()
+        b_m = t[0]
+        b_n = t[1]
+        b_transpose = t[2]
+        browptr_comp = t[3]
+        bcolidx_comp = t[4]
 
 
         tree = CFile("generated", [
@@ -68,11 +47,8 @@ class AkxGenerator(LazySpecializedFunction):
             self.epilogue_dispatch(b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis)
         ])
 
-        entry_type = CFUNCTYPE(None)
 
-        fn = AkxFunction()
-
-        return fn.finalize(Project([tree]), "nothing", entry_type)
+        return tree.codegen()
 
     def load_y(self, y, ib, b_m, b_n, b_transpose):
         node_list = []
@@ -423,30 +399,11 @@ class AkxGenerator(LazySpecializedFunction):
 
 
 class Akx(object):
-    """
-    A class for generating jit akx c source code.
-    """
 
     def __init__(self):
-        """Instantiate translator."""
-        self.c_apply_all = AkxGenerator(None)
+        self.akx_gen = AkxGenerator(None)
 
-    def __call__(self, b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis):
+    def __call__(self, variants, basis):
         """Apply the operator to the arguments via a generated function."""
-        return self.c_apply_all(b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis)
-
-    def nothing(self):
-        pass
-
-
-# ---------------------------------------------------------------------------
-# User code
-
-
-def main():
-
-    c_akx = Akx()
-    c_akx(4, 4, 0, 4, 4, 0)
-
-if __name__ == '__main__':
-    main()
+        args = self.akx_gen.args_to_subconfig([variants, basis])
+        return self.akx_gen.transform(None, (args, None))
