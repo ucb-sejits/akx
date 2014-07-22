@@ -1,0 +1,12 @@
+typedef void (*bcsr_func_noimplicit)(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb);
+typedef void (*bcsr_func_implicit)(
+  const struct bcsr_t *__restrict__ A,
+  const value_t *__restrict__ x,
+  value_t *__restrict__ y,
+  index_t mb,
+  const index_t *__restrict__ computation_seq,
+  index_t seq_len);

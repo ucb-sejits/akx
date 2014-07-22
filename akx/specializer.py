@@ -6,48 +6,35 @@ from ctree.jit import LazySpecializedFunction
 # ---------------------------------------------------------------------------
 
 class AkxGenerator(LazySpecializedFunction):
-    def args_to_subconfig(self, args):
-        """
-        Analyze arguments and return a 'subconfig', a hashable object
-        that classifies them. Arguments with identical subconfigs
-        might be processed by the same generated code.
-        """
 
+    def args_to_subconfig(self, args):
         return {
             'variants': args[0],
             'basis': args[1]
         }
 
-
     def transform(self, py_ast, program_config):
-        """
-        Convert the Python AST to a C AST according to the directions
-        given in program_config.
-        """
         arg_config, tuner_config = program_config
 
         variants = arg_config['variants']
         basis = arg_config['basis']
-        t = variants.pop()
-        b_m = t[0]
-        b_n = t[1]
-        b_transpose = t[2]
-        browptr_comp = t[3]
-        bcolidx_comp = t[4]
+        var_list = list(variants)
+        print(var_list)
+        node_list = []
+        node_list.append(FileTemplate('../templates/prologue'))
+        for variant in var_list:
+            b_m, b_n, b_transpose, browptr_comp, bcolidx_comp = variant
+            node_list.append(self.bcsr_spmv('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+            node_list.append(self.bcsr_spmv_rowlist('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+            node_list.append(self.bcsr_spmv_stanzas('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+            node_list.append(self.bcsr_spmv('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+            node_list.append(self.bcsr_spmv_rowlist('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+            node_list.append(self.bcsr_spmv_stanzas('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis))
+        node_list.append(self.bsrc_func_dispatch(basis))
+        node_list.append(self.bsrc_func_table(var_list))
+        node_list.append(self.epilogue_dispatch(basis))
 
-
-        tree = CFile("generated", [
-            FileTemplate('../templates/prologue'),
-            self.bcsr_spmv('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.bcsr_spmv_rowlist('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.bcsr_spmv_stanzas('', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.bcsr_spmv('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.bcsr_spmv_rowlist('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.bcsr_spmv_stanzas('_symmetric', b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis),
-            self.epilogue_dispatch(b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis)
-        ])
-
-
+        tree = CFile("generated", node_list)
         return tree.codegen()
 
     def load_y(self, y, ib, b_m, b_n, b_transpose):
@@ -334,15 +321,16 @@ class AkxGenerator(LazySpecializedFunction):
             params += '\nvalue_t coeff,'
         params += '\nindex_t mb'
 
-        return FunctionDecl(None, 'bcsr_spmv' + format, [StringTemplate(params)], [
-            StringTemplate('index_t ib, jb;'),
-            self.init(browptr_comp, bcolidx_comp),
-            For(Assign(SymbolRef('ib'), Constant(0)),
-                    Lt(SymbolRef('ib'), SymbolRef('mb')),
-                    PreInc(SymbolRef('ib')),
-                    self.do_tilerow(format, b_m, b_n, b_transpose, basis)
-                )
-            ]
+        return FunctionDecl(None, 'bcsr_spmv' + format + '_' + str(b_m) + '_' + str(b_n) + '_' + str(b_transpose) + '_' + str(browptr_comp) + '_' + str(bcolidx_comp),
+                            [StringTemplate(params)],
+                            [StringTemplate('index_t ib, jb;'),
+                            self.init(browptr_comp, bcolidx_comp),
+                            For(Assign(SymbolRef('ib'), Constant(0)),
+                                Lt(SymbolRef('ib'), SymbolRef('mb')),
+                                PreInc(SymbolRef('ib')),
+                                self.do_tilerow(format, b_m, b_n, b_transpose, basis)
+                                )
+                            ]
         )
 
     def bcsr_spmv_rowlist(self, format, b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis):
@@ -351,18 +339,19 @@ class AkxGenerator(LazySpecializedFunction):
             params += '\nvalue_t coeff,'
         params += '\nindex_t mb,\nconst index_t *__restrict__ computation_seq,\nindex_t seq_len'
 
-        return FunctionDecl(None, 'bcsr_spmv' + format + '_rowlist', [StringTemplate(params)], [
-                StringTemplate('index_t q, ib, jb;'),
-                self.init(browptr_comp, bcolidx_comp),
-                For(Assign(SymbolRef('q'), Constant(0)),
-                    Lt(SymbolRef('q'), SymbolRef('seq_len')),
-                    PostInc(SymbolRef('q')),
-                    [
-                        Assign(SymbolRef('ib'), ArrayRef(SymbolRef('computation_seq'), SymbolRef('q'))),
-                        self.do_tilerow(format, b_m, b_n, b_transpose, basis)
-                    ]
-                )
-            ]
+        return FunctionDecl(None, 'bcsr_spmv' + format + '_rowlist' + '_' + str(b_m) + '_' + str(b_n) + '_' + str(b_transpose) + '_' + str(browptr_comp) + '_' + str(bcolidx_comp),
+                            [StringTemplate(params)],
+                            [StringTemplate('index_t q, ib, jb;'),
+                            self.init(browptr_comp, bcolidx_comp),
+                            For(Assign(SymbolRef('q'), Constant(0)),
+                                Lt(SymbolRef('q'), SymbolRef('seq_len')),
+                                PostInc(SymbolRef('q')),
+                                [
+                                    Assign(SymbolRef('ib'), ArrayRef(SymbolRef('computation_seq'), SymbolRef('q'))),
+                                    self.do_tilerow(format, b_m, b_n, b_transpose, basis)
+                                ]
+                                )
+                            ]
         )
 
     def bcsr_spmv_stanzas(self, format, b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis):
@@ -371,8 +360,9 @@ class AkxGenerator(LazySpecializedFunction):
             params += '\nvalue_t coeff,'
         params += '\nindex_t mb,\nconst index_t *__restrict__ computation_seq,\nindex_t seq_len'
 
-        return FunctionDecl(None, 'bcsr_spmv' + format +'_stanzas', [StringTemplate(params)], [
-                StringTemplate('index_t q, ib, jb;'),
+        return FunctionDecl(None, 'bcsr_spmv' + format +'_stanzas' + '_' + str(b_m) + '_' + str(b_n) + '_' + str(b_transpose) + '_' + str(browptr_comp) + '_' + str(bcolidx_comp),
+                [StringTemplate(params)],
+                [StringTemplate('index_t q, ib, jb;'),
                 self.init(browptr_comp, bcolidx_comp),
                 For(Assign(SymbolRef('q'), Constant(0)),
                     Lt(SymbolRef('q'), SymbolRef('seq_len')),
@@ -381,21 +371,60 @@ class AkxGenerator(LazySpecializedFunction):
                         Lt(SymbolRef('ib'), ArrayRef(SymbolRef('computation_seq'), Add(SymbolRef('q'), Constant(1)))),
                         PostInc(SymbolRef('ib')),
                         self.do_tilerow(format, b_m, b_n, b_transpose, basis)
+                        )
                     )
-                )
-            ]
+                ]
         )
 
-    def epilogue_dispatch(self, b_m, b_n, b_transpose, browptr_comp, bcolidx_comp, basis):
-        return FileTemplate('../templates/' + ('epilogue_newton' if basis else 'epilogue_powers'),
-                                {
-                                    'b_m': Constant(b_m),
-                                    'b_n': Constant(b_n),
-                                    'b_transpose': Constant(b_transpose),
-                                    'browptr_comp': Constant(browptr_comp),
-                                    'bcolidx_comp': Constant(bcolidx_comp)
-                                }
-                            )
+    def bsrc_func_dispatch(self, basis):
+        return FileTemplate('../templates/' + ('bsrc_func_newton' if basis else 'bsrc_func_powers'))
+
+    def bsrc_func_entry(self, variant):
+        entry_str = """\
+          { $b_m, $b_n, $b_transpose, $browptr, $bcolidx,
+            { { bcsr_spmv_$b_m_$b_n_$b_transpose_$browptr_$bcolidx,
+                { bcsr_spmv_rowlist_$b_m_$b_n_$b_transpose_$browptr_$bcolidx,
+                  bcsr_spmv_stanzas_$b_m_$b_n_$b_transpose_$browptr_$bcolidx }
+              },
+              { bcsr_spmv_symmetric_$b_m_$b_n_$b_transpose_$browptr_$bcolidx,
+                { bcsr_spmv_symmetric_rowlist_$b_m_$b_n_$b_transpose_$browptr_$bcolidx,
+                  bcsr_spmv_symmetric_stanzas_$b_m_$b_n_$b_transpose_$browptr_$bcolidx }
+              }
+            }
+          },
+        """
+        entry_str = entry_str.replace('$b_m', str(variant[0]))
+        entry_str = entry_str.replace('$b_n', str(variant[1]))
+        entry_str = entry_str.replace('$b_transpose', str(variant[2]))
+        entry_str = entry_str.replace('$browptr', str(variant[3]))
+        entry_str = entry_str.replace('$bcolidx', str(variant[4]))
+        return StringTemplate(entry_str)
+
+    def bsrc_func_table(self, var_list):
+        node_list = []
+        for variant in var_list:
+            node_list.append(self.bsrc_func_entry(variant))
+        return StringTemplate("""\
+            struct bcsr_funcs {
+              index_t b_m;
+              index_t b_n;
+              int b_transpose;
+              int browptr_comp;
+              int bcolidx_comp;
+              struct {
+                bcsr_func_noimplicit noimplicit;
+                bcsr_func_implicit implicit[2];
+              } funcs[2];
+            } bcsr_funcs_table[] = {
+            $entries
+            };
+            """,  {
+                'entries': node_list
+            }
+        )
+
+    def epilogue_dispatch(self, basis):
+        return FileTemplate('../templates/' + ('epilogue_newton' if basis else 'epilogue_powers'))
 
 
 class Akx(object):
