@@ -19,7 +19,6 @@ class AkxGenerator(LazySpecializedFunction):
         variants = arg_config['variants']
         basis = arg_config['basis']
         var_list = list(variants)
-        print(var_list)
         node_list = []
         node_list.append(FileTemplate('../templates/prologue'))
         for variant in var_list:
